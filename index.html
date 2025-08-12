@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>حاسبة التبويض</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #ffe6f0, #ffffff);
+      min-height: 100vh;
+      margin: 0;
+      color: #333;
+    }
+    header.fancy-header {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #f78ca0, #f9748f);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 1px 1px 2px rgba(247, 140, 160, 0.5);
+      margin-bottom: 20px;
+      user-select: none;
+    }
+    .lang-select {
+      margin-bottom: 30px;
+      display: inline-flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .lang-btn {
+      cursor: pointer;
+      background-color: #f9748f;
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      padding: 12px 30px;
+      border-radius: 30px;
+      box-shadow: 0 4px 10px rgba(249, 116, 143, 0.3);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      user-select: none;
+      min-width: 120px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .lang-btn:hover {
+      background-color: #f0657b;
+      transform: scale(1.05);
+      box-shadow: 0 6px 14px rgba(240, 101, 123, 0.5);
+    }
+    h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      user-select: none;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-size: 18px;
+      user-select: none;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1.5px solid #f9748f;
+      outline: none;
+      width: 250px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    input:focus {
+      border-color: #f0657b;
+      box-shadow: 0 0 6px #fbb6c1;
+    }
+    button {
+      background-color: #f9748f;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      width: 150px;
+      user-select: none;
+      border-radius: 30px;
+      box-shadow: 0 4px 10px rgba(249, 116, 143, 0.3);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    button:hover {
+      background-color: #f0657b;
+      transform: scale(1.05);
+      box-shadow: 0 6px 14px rgba(240, 101, 123, 0.5);
+    }
+    .result {
+      margin-top: 25px;
+      font-weight: bold;
+      color: green;
+      font-size: 20px;
+      min-height: 60px;
+      user-select: text;
+    }
+    #cycleNotification {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+      border-radius: 8px;
+      padding: 12px;
+      display: none;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="fancy-header">Mayan</header>
+
+  <div class="lang-select" aria-label="اختيار اللغة / Select language / Choisir la langue">
+    <button class="lang-btn" onclick="changeLang('ar')">العربية</button>
+    <button class="lang-btn" onclick="changeLang('en')">English</button>
+    <button class="lang-btn" onclick="changeLang('fr')">Français</button>
+  </div>
+
+  <h2 id="title">حاسبة التبويض</h2>
+
+  <label id="labelLastPeriod" for="lastPeriod">أول يوم من آخر دورة شهرية:</label>
+  <input type="date" id="lastPeriod" aria-describedby="labelLastPeriod" />
+
+  <label id="labelCycleLength" for="cycleLength">طول الدورة الشهرية (بالأيام):</label>
+  <input type="number" id="cycleLength" value="28" min="21" max="35" aria-describedby="labelCycleLength" />
+
+  <br />
+
+  <button onclick="calculateOvulation()" id="btnCalculate">احسبي الآن</button>
+
+  <div class="result" id="result" role="region" aria-live="polite"></div>
+  <div id="cycleNotification" role="alert" aria-live="assertive"></div>
+
+  <audio id="successSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
+
+  <script>
+    const texts = {
+      ar: {
+        title: "حاسبة التبويض",
+        labelLastPeriod: "أول يوم من آخر دورة شهرية:",
+        labelCycleLength: "طول الدورة الشهرية (بالأيام):",
+        btnCalculate: "احسبي الآن",
+        error: "يرجى إدخال جميع البيانات بشكل صحيح.",
+        ovulation: "تاريخ الإباضة:",
+        fertileWindow: "نافذة الخصوبة: من",
+        to: "إلى",
+        regular: "دورة منتظمة",
+        irregular: "دورة غير منتظمة"
+      },
+      en: {
+        title: "Ovulation Calculator",
+        labelLastPeriod: "First day of last menstrual period:",
+        labelCycleLength: "Cycle length (days):",
+        btnCalculate: "Calculate Now",
+        error: "Please enter all data correctly.",
+        ovulation: "Ovulation Date:",
+        fertileWindow: "Fertile Window: From",
+        to: "to",
+        regular: "Regular cycle",
+        irregular: "Irregular cycle"
+      },
+      fr: {
+        title: "Calculateur d'ovulation",
+        labelLastPeriod: "Premier jour des dernières règles:",
+        labelCycleLength: "Durée du cycle (jours):",
+        btnCalculate: "Calculer maintenant",
+        error: "Veuillez entrer toutes les données correctement.",
+        ovulation: "Date d'ovulation:",
+        fertileWindow: "Fenêtre de fertilité: Du",
+        to: "au",
+        regular: "Cycle régulier",
+        irregular: "Cycle irrégulier"
+      }
+    };
+
+    const frenchMonthsInArabic = [
+      "جانفي", "فيفري", "مارس", "أفريل", "ماي", "جوان",
+      "جويلية", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+    ];
+
+    const monthNames = {
+      en: [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ],
+      fr: [
+        "janvier", "février", "mars", "avril", "mai", "juin",
+        "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+      ]
+    };
+
+    let currentLang = 'ar';
+
+    function changeLang(lang) {
+      currentLang = lang;
+      document.body.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+      document.getElementById('title').innerText = texts[lang].title;
+      document.getElementById('labelLastPeriod').innerText = texts[lang].labelLastPeriod;
+      document.getElementById('labelCycleLength').innerText = texts[lang].labelCycleLength;
+      document.getElementById('btnCalculate').innerText = texts[lang].btnCalculate;
+      document.getElementById('result').innerText = '';
+      document.getElementById('cycleNotification').style.display = 'none';
+      document.getElementById('cycleNotification').innerText = '';
+    }
+
+    function formatDate(date) {
+      const day = date.getDate();
+      const year = date.getFullYear();
+      let monthName;
+
+      if (currentLang === 'ar') {
+        monthName = frenchMonthsInArabic[date.getMonth()];
+        return `${day} ${monthName} ${year}`;
+      } else {
+        monthName = monthNames[currentLang][date.getMonth()];
+        return `${day} ${monthName} ${year}`;
+      }
+    }
+
+    function calculateOvulation() {
+      const lastPeriodInput = document.getElementById("lastPeriod").value;
+      const cycleLengthInput = document.getElementById("cycleLength").value;
+      const lastPeriod = new Date(lastPeriodInput);
+      const cycleLength = parseInt(cycleLengthInput);
+      const resultDiv = document.getElementById("result");
+      const notif = document.getElementById("cycleNotification");
+
+      if (!lastPeriodInput || isNaN(lastPeriod.getTime()) || isNaN(cycleLength)) {
+        resultDiv.innerText = texts[currentLang].error;
+        notif.style.display = "none";
+        return;
+      }
+
+      const ovulationDay = new Date(lastPeriod);
+      ovulationDay.setDate(ovulationDay.getDate() + (cycleLength - 14));
+
+      const fertileStart = new Date(ovulationDay);
+      fertileStart.setDate(fertileStart.getDate() - 5);
+
+      resultDiv.innerHTML =
+        `${texts[currentLang].ovulation} <strong>${formatDate(ovulationDay)}</strong><br>` +
+        `${texts[currentLang].fertileWindow} <strong>${formatDate(fertileStart)}</strong> ${texts[currentLang].to} <strong>${formatDate(ovulationDay)}</strong>`;
+
+      // إشعار نوع الدورة الشهرية
+      if (cycleLength >= 26 && cycleLength <= 32) {
+        notif.innerText = texts[currentLang].regular;
+        notif.style.backgroundColor = "#d4edda";
+        notif.style.color = "#155724";
+      } else {
+        notif.innerText = texts[currentLang].irregular;
+        notif.style.backgroundColor = "#f8d7da";
+        notif.style.color = "#721c24";
+      }
+      notif.style.display = "block";
+
+      // تشغيل التنبيه الصوتي
+      document.getElementById("successSound").play();
+    }
+
+    // تهيئة اللغة العربية بشكل افتراضي عند تحميل الصفحة
+    changeLang('ar');
+  </script>
+
+</body>
+</html>
